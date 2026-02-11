@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X Research | Professional Context Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8', // Light Blue accent
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            900: '#0c4a6e',
+                        },
+                        surface: {
+                            50: '#f8fafc',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#020617', // Deep background
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'ping-slow': 'ping 2s cubic-bezier(0, 0, 0.2, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* Typography Refinement */
+        .prose {
+            max-width: 65ch;
+            margin: 0 auto;
+            color: #94a3b8;
+        }
+
+        .prose h1,
+        .prose h2,
+        .prose h3 {
+            color: #f1f5f9;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .prose h1 {
+            margin-top: 0;
+            font-size: 2.25rem;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+        }
+
+        .prose h2 {
+            font-size: 1.5rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #1e293b;
+            padding-bottom: 0.5rem;
+        }
+
+        .prose h3 {
+            font-size: 1.25rem;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            color: #e2e8f0;
+        }
+
+        .prose p {
+            margin-bottom: 1.5rem;
+            line-height: 1.75;
+            font-size: 1rem;
+        }
+
+        .prose ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .prose ul li {
+            padding-left: 1.5rem;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .prose ul li::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.6em;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #38bdf8;
+        }
+
+        .prose strong {
+            color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .prose blockquote {
+            border-left: 4px solid #38bdf8;
+            padding-left: 1rem;
+            color: #cbd5e1;
+            font-style: italic;
+            background: rgba(56, 189, 248, 0.05);
+            padding: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .prose code {
+            color: #38bdf8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            background: #1e293b;
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+        }
+
+        .prose pre {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            border: 1px solid #1e293b;
+        }
+
+        .prose pre code {
+            color: inherit;
+            background: transparent;
+            padding: 0;
+        }
+
+        /* Glass Effect */
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Custom Checkbox/Radio */
+        .card-radio:checked+div {
+            border-color: #38bdf8;
+            background-color: rgba(56, 189, 248, 0.1);
+        }
+
+        .card-radio:checked+div .check-icon {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Scanning Line Animation */
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, transparent, #38bdf8, transparent);
+            animation: scan 2s linear infinite;
+            opacity: 0.5;
+        }
+
+        @keyframes scan {
+            0% {
+                top: 0%;
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.8;
+            }
+
+            90% {
+                opacity: 0.8;
+            }
+
+            100% {
+                top: 100%;
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="bg-surface-950 text-slate-300 h-screen flex flex-col antialiased selection:bg-brand-500/30 selection:text-white overflow-hidden">
+
+    <!-- Navbar -->
+    <nav class="glass z-50 h-16 shrink-0 flex items-center justify-between px-6 sticky top-0">
+        <div class="flex items-center gap-3">
+            <div
+                class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/20">
+                <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-white text-lg tracking-tight leading-tight">X Research <span
+                        class="text-slate-500 font-normal">Hub</span></h1>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700/50">
+                <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span class="text-xs font-medium text-slate-400">System Operational</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex flex-1 overflow-hidden">
+
+        <!-- Sidebar: History -->
+        <aside id="historyPanel"
+            class="w-72 bg-surface-900 border-r border-slate-800 flex flex-col shrink-0 transition-all duration-300 overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-surface-900/50 cursor-pointer select-none"
+                onclick="toggleHistory()">
+                <div class="flex items-center gap-2">
+                    <svg id="historyToggleIcon"
+                        class="w-4 h-4 text-slate-500 transition-transform duration-300 transform rotate-0" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">リサーチ履歴</span>
+                </div>
+                <button id="refreshHistory" onclick="event.stopPropagation(); fetchHistory();"
+                    class="p-1.5 rounded-md hover:bg-slate-800 text-slate-500 hover:text-white transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div id="historyListContainer"
+                class="flex-1 overflow-y-auto p-3 space-y-1 transition-all duration-300 origin-top">
+                <div id="historyList" class="space-y-1">
+                    <!-- Items injected via JS -->
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-800 text-xs text-slate-600 text-center opacity-80" id="histVersion">
+                v1.2.1 • Pro Edition
+            </div>
+        </aside>
+
+        <!-- Config Panel -->
+        <main
+            class="w-[450px] bg-surface-900/50 border-r border-slate-800 flex flex-col shrink-0 relative z-10 shadow-2xl shadow-black/20 h-full">
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-white mb-2">New Research</h2>
+                    <p class="text-slate-400 text-sm">パラメータを設定して、プロフェッショナルなリサーチを実行します。</p>
+                </div>
+
+                <form id="researchForm" class="space-y-6">
+
+                    <!-- Topic Input -->
+                    <div class="group">
+                        <label class="block text-xs font-semibold text-brand-400 uppercase tracking-wider mb-2">リサーチ対象
+                            (Topic)</label>
+                        <div class="relative">
+                            <input type="text" name="topic" required placeholder="例: DeepSeek V3 の技術的な特徴"
+                                class="w-full bg-slate-800/50 border border-slate-700 rounded-lg px-4 py-3.5 text-white placeholder-slate-600 focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500 outline-none transition-all shadow-sm font-medium">
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-slate-600" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Research Mode (Deep/Simple) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">リサーチの深さ
+                            (Depth)</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="depth" value="simple" checked class="card-radio sr-only">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all flex flex-col gap-1 h-full">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-semibold text-white">Simple</span>
+                                        <span
+                                            class="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center check-icon opacity-0 transition-all text-brand-400">
+                                            <div class="w-2 h-2 rounded-full bg-brand-400"></div>
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500">高速・シングルパス検索</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="depth" value="deep" class="card-radio sr-only">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all flex flex-col gap-1 h-full">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-semibold text-white">Deep Research</span>
+                                        <span
+                                            class="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center check-icon opacity-0 transition-all">
+                                            <div class="w-2 h-2 rounded-full bg-brand-400"></div>
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500">多角的・反証チェックあり</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Templates -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">出力テンプレート
+                            (Template)</label>
+                        <div class="space-y-2">
+                            <label class="cursor-pointer block">
+                                <input type="radio" name="template" value="general" checked class="card-radio sr-only">
+                                <div
+                                    class="flex items-center p-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-slate-300 mr-3">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M4 6h16M4 12h16M4 18h7" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-white">一般概要 (General Overview)</div>
+                                        <div class="text-xs text-slate-500">事実ベースのバランスの取れた要約</div>
+                                    </div>
+                                    <div class="check-icon opacity-0 scale-50 transition-all text-brand-400"><svg
+                                            class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7" />
+                                        </svg></div>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer block">
+                                <input type="radio" name="template" value="trend" class="card-radio sr-only">
+                                <div
+                                    class="flex items-center p-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-slate-300 mr-3">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-white">トレンド分析 (Trend Analysis)</div>
+                                        <div class="text-xs text-slate-500">時系列の変遷と反応にフォーカス</div>
+                                    </div>
+                                    <div class="check-icon opacity-0 scale-50 transition-all text-brand-400"><svg
+                                            class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7" />
+                                        </svg></div>
+                                </div>
+                            </label>
+
+                            <label class="cursor-pointer block">
+                                <input type="radio" name="template" value="opinion" class="card-radio sr-only">
+                                <div
+                                    class="flex items-center p-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-700 flex items-center justify-center text-slate-300 mr-3">
+                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                        </svg>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-white">オピニオン (Opinion & Insight)</div>
+                                        <div class="text-xs text-slate-500">独自の視点・強い主張・Whyの深掘り</div>
+                                    </div>
+                                    <div class="check-icon opacity-0 scale-50 transition-all text-brand-400"><svg
+                                            class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 13l4 4L19 7" />
+                                        </svg></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Perspective (Audience) -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">リサーチ視点
+                            (Perspective)</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="audience" value="engineer" checked class="card-radio sr-only">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all flex flex-col gap-1 h-full">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-semibold text-white">エンジニア <span
+                                                class="text-slate-500 font-normal">Mode</span></span>
+                                        <span
+                                            class="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center check-icon opacity-0 transition-all">
+                                            <div class="w-2 h-2 rounded-full bg-brand-400"></div>
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500">技術詳細・実装コード・仕組み</span>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative">
+                                <input type="radio" name="audience" value="investor" class="card-radio sr-only">
+                                <div
+                                    class="px-4 py-3 rounded-lg border border-slate-700 bg-slate-800/30 hover:bg-slate-800 transition-all flex flex-col gap-1 h-full">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-sm font-semibold text-white">ビジネス <span
+                                                class="text-slate-500 font-normal">Mode</span></span>
+                                        <span
+                                            class="w-4 h-4 rounded-full border border-slate-600 flex items-center justify-center check-icon opacity-0 transition-all text-brand-400">
+                                            <div class="w-2 h-2 rounded-full bg-brand-400"></div>
+                                        </span>
+                                    </div>
+                                    <span class="text-xs text-slate-500">市場影響・競合優位性・トレンド</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Params Grid -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">対象市場
+                                (Target Market)</label>
+                            <select name="locale"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-brand-500">
+                                <option value="ja" selected>🇯🇵 日本市場 (Japan)</option>
+                                <option value="us">🇺🇸 米国・グローバル (US/Global)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">期間
+                                (Days)</label>
+                            <input type="number" name="days" value="30" min="1" max="365"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-brand-500">
+                        </div>
+                    </div>
+
+                    <!-- Advanced: TopN / Buzz Threshold / Primary Source -->
+                    <div class="border border-slate-700/50 rounded-xl p-4 bg-slate-800/20 space-y-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <svg class="w-3.5 h-3.5 text-brand-400" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                            </svg>
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">詳細設定
+                                (Advanced)</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- TopN -->
+                            <div>
+                                <label
+                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">TopN
+                                    <span class="text-slate-600 font-normal">(バズ投稿数)</span></label>
+                                <select name="topN"
+                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-brand-500">
+                                    <option value="10" selected>Top 10</option>
+                                    <option value="15">Top 15</option>
+                                    <option value="20">Top 20</option>
+                                    <option value="30">Top 30</option>
+                                </select>
+                            </div>
+
+                            <!-- Buzz Threshold -->
+                            <div>
+                                <label
+                                    class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Buzz閾値
+                                    <span class="text-slate-600 font-normal">(最低いいね数)</span></label>
+                                <input type="number" name="buzzThreshold" value="100" min="0" max="100000" step="10"
+                                    class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-brand-500"
+                                    placeholder="100">
+                            </div>
+                        </div>
+
+                        <!-- Primary Source Toggle -->
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">一次情報優先
+                                    <span class="text-slate-600 font-normal">(Primary Source)</span></label>
+                                <p class="text-[10px] text-slate-600 mt-0.5">ONで公式・原著者の投稿を上位に採用</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="primarySourcePriority" value="true" checked
+                                    class="sr-only peer">
+                                <div
+                                    class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600 peer-checked:after:bg-white">
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Goal -->
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">具体的なゴール
+                            (Goal) <span class="text-slate-600 font-normal">(任意)</span></label>
+                        <textarea name="goal" rows="3" placeholder="（任意）特に知りたいポイントや、重視する視点があれば記入してください..."
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm outline-none focus:border-brand-500 resize-none"></textarea>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- Fixed Footer -->
+            <div class="p-6 border-t border-slate-800/50 bg-surface-900/95 backdrop-blur shrink-0 z-20">
+                <button type="submit" form="researchForm" id="submitBtn"
+                    class="w-full group shadow-lg shadow-brand-500/20 bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 px-4 rounded-xl transition-all flex justify-center items-center gap-2 transform active:scale-[0.98]">
+                    <span class="text-sm">分析を実行 (Run Analysis)</span>
+                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </button>
+            </div>
+        </main>
+
+        <!-- Preview Panel -->
+        <div class="flex-1 bg-surface-950 flex flex-col relative min-w-0"
+            style="background-image: radial-gradient(circle at 50% 50%, #1e293b 0%, #020617 100%);">
+
+            <!-- Result Toolbar -->
+            <div
+                class="h-16 flex items-center justify-between px-8 border-b border-slate-800/50 sticky top-0 bg-surface-950/80 backdrop-blur z-20">
+                <div class="flex items-center gap-2 text-sm text-slate-400">
+                    <div id="statusIndicator" class="w-2 h-2 rounded-full bg-slate-600 transition-colors"></div>
+                    <span class="font-medium" id="resultStatus">待機中 (Waiting...)</span>
+                </div>
+                <button id="copyBtn"
+                    class="hidden text-xs font-medium text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg border border-slate-700 transition-colors flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 011.414.414l4 4a1 1 0 01.414 1.414V19a2 2 0 01-2 2h-1M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                    </svg>
+                    Markdownをコピー
+                </button>
+            </div>
+
+            <!-- Content Container -->
+            <div class="flex-1 overflow-y-auto p-8 lg:p-12 relative scroll-smooth bg-surface-950" id="resultContainer">
+
+                <!-- Placeholder Area -->
+                <div id="initialState"
+                    class="absolute inset-0 flex flex-col items-center justify-center text-slate-700 select-none pointer-events-none">
+                    <svg class="w-32 h-32 mb-6 text-slate-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
+                            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    </svg>
+                    <p class="text-sm font-medium tracking-wide uppercase opacity-50">Context Generator</p>
+                </div>
+
+                <!-- NEW Loading Overlay -->
+                <!-- 背景を半透明で覆い、中心にリッチなアニメーションを表示 -->
+                <div id="loadingState"
+                    class="hidden absolute inset-0 z-50 bg-slate-950/90 flex flex-col items-center justify-center backdrop-blur-sm transition-all duration-500">
+                    <div class="scan-line"></div>
+
+                    <!-- Center Pulse -->
+                    <div class="relative w-32 h-32 mb-8">
+                        <div class="absolute inset-0 bg-brand-500/20 rounded-full animate-ping-slow"></div>
+                        <div class="absolute inset-4 bg-brand-500/10 rounded-full animate-pulse-slow"></div>
+                        <div class="absolute inset-8 bg-brand-500/5 rounded-full animate-pulse"></div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <svg class="w-12 h-12 text-brand-400 animate-pulse" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                        </div>
+                        <!-- Orbiting dots -->
+                        <div class="absolute inset-0 animate-spin" style="animation-duration: 3s;">
+                            <div
+                                class="absolute top-0 left-1/2 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_rgba(255,255,255,0.8)] -translate-x-1/2">
+                            </div>
+                        </div>
+                        <div class="absolute inset-2 animate-spin"
+                            style="animation-duration: 4s; animation-direction: reverse;">
+                            <div
+                                class="absolute bottom-0 left-1/2 w-1.5 h-1.5 bg-brand-400 rounded-full -translate-x-1/2">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Status Text -->
+                    <div class="text-center w-full max-w-md space-y-3">
+                        <h3 id="loadingTitle" class="text-xl font-bold text-white tracking-widest uppercase">
+                            Initializing</h3>
+                        <div class="h-6 overflow-hidden relative">
+                            <p id="loadingSubtitle"
+                                class="text-sm text-brand-400 font-mono transition-all duration-300">System check...</p>
+                        </div>
+
+                        <!-- Progress Bar Simulation -->
+                        <div class="w-64 h-1 bg-slate-800 rounded-full mx-auto overflow-hidden mt-6">
+                            <div id="loadingBar"
+                                class="h-full bg-gradient-to-r from-brand-600 to-brand-400 w-0 transition-all duration-300">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Markdown Content -->
+                <article id="contentState" class="hidden prose prose-invert"></article>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- State Management ---
+        const ui = {
+            form: document.getElementById('researchForm'),
+            submitBtn: document.getElementById('submitBtn'),
+            historyList: document.getElementById('historyList'),
+            initialState: document.getElementById('initialState'),
+            loadingState: document.getElementById('loadingState'),
+            contentState: document.getElementById('contentState'),
+            copyBtn: document.getElementById('copyBtn'),
+            refreshHistoryBtn: document.getElementById('refreshHistory'),
+            resultStatus: document.getElementById('resultStatus'),
+            statusIndicator: document.getElementById('statusIndicator'),
+            loadingTitle: document.getElementById('loadingTitle'),
+            loadingSubtitle: document.getElementById('loadingSubtitle'),
+            loadingBar: document.getElementById('loadingBar'),
+        };
+
+        let currentMarkdown = '';
+        let loadingInterval;
+        let progressInterval;
+
+        // --- History Logic ---
+        // Toggle History Panel
+        // Toggle History Panel
+        function toggleHistory() {
+            const panel = document.getElementById('historyPanel');
+            const container = document.getElementById('historyListContainer');
+            const footer = document.getElementById('histVersion');
+            const icon = document.getElementById('historyToggleIcon');
+            const titleText = panel.querySelector('span.tracking-wider'); // "リサーチ履歴" text
+
+            // Check current state (if w-72 present, it's open)
+            const isOpen = panel.classList.contains('w-72');
+
+            if (isOpen) {
+                // Close it
+                panel.classList.remove('w-72');
+                panel.classList.add('w-[52px]'); // Collapsed width
+
+                container.classList.add('hidden');
+                if (footer) footer.classList.add('hidden');
+                if (titleText) titleText.classList.add('hidden');
+
+                icon.style.transform = 'rotate(-90deg)';
+                ui.refreshHistoryBtn.classList.add('hidden');
+            } else {
+                // Open it
+                panel.classList.remove('w-[52px]');
+                panel.classList.add('w-72');
+
+                setTimeout(() => {
+                    container.classList.remove('hidden');
+                    if (footer) footer.classList.remove('hidden');
+                    if (titleText) titleText.classList.remove('hidden');
+                    ui.refreshHistoryBtn.classList.remove('hidden');
+                }, 150); // Delay content showing for smoother transition
+
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const items = await res.json();
+                renderHistory(items);
+            } catch (e) {
+                console.error("History error", e);
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function renderHistory(items) {
+            ui.historyList.innerHTML = DOMPurify.sanitize(items.map(item => {
+                const date = new Date(item.created);
+                const timeStr = date.toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                const safeFilename = escapeHtml(item.filename).replace(/'/g, "&#39;");
+                const displayTitle = escapeHtml(item.title || item.filename.replace(/_context\.md$/, '').replace(/^\d{8}T\d{6}_/, '').replace(/_/g, ' '));
+
+                return `
+                <button onclick="loadReport('${safeFilename}')" class="w-full text-left p-3 rounded-lg hover:bg-slate-800/80 group transition-all border border-transparent hover:border-slate-700/50 mb-1 relative overflow-hidden">
+                    <div class="flex justify-between items-start mb-1">
+                        <div class="text-[10px] uppercase font-bold text-slate-500 group-hover:text-brand-400 transition-colors">${timeStr}</div>
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                        </div>
+                    </div>
+                    <div class="text-sm text-slate-300 font-medium truncate group-hover:text-white" title="${displayTitle}">${displayTitle}</div>
+                </button>
+                `;
+            }).join(''));
+        }
+
+        window.loadReport = async (filename) => {
+            ui.initialState.classList.add('hidden');
+            ui.contentState.classList.add('hidden');
+            ui.loadingState.classList.remove('hidden');
+
+            // Short loading for history
+            updateLoadingUI("アーカイブ取得中", "ローカルデータを読み込んでいます...", 50);
+
+            try {
+                const res = await fetch('/api/history/' + filename);
+                const data = await res.json();
+
+                setTimeout(() => {
+                    renderResult(data.markdown);
+                    ui.resultStatus.textContent = "過去ログを表示中: " + filename;
+                    ui.statusIndicator.classList.remove('bg-emerald-500', 'bg-slate-600');
+                    ui.statusIndicator.classList.add('bg-blue-500');
+                    ui.loadingState.classList.add('hidden');
+                }, 600);
+            } catch (e) {
+                alert('Error: ' + e.message);
+                ui.loadingState.classList.add('hidden');
+            }
+        };
+
+        // --- Research Logic ---
+        ui.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(ui.form);
+            const isDeep = formData.get('depth') === 'deep';
+
+            startLoadingAnimation(isDeep);
+
+            try {
+                const res = await fetch('/api/research', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData))
+                });
+
+                if (!res.ok) throw new Error(await res.text());
+                const data = await res.json();
+
+                renderResult(data.markdown);
+                fetchHistory(); // Update list
+
+            } catch (err) {
+                console.error(err);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'p-6 rounded-lg bg-red-900/20 border border-red-800 text-red-200';
+                const h3 = document.createElement('h3');
+                h3.className = 'font-bold text-lg mb-2';
+                h3.textContent = 'Analysis Failed';
+                const p = document.createElement('p');
+                p.className = 'font-mono text-sm';
+                p.textContent = err.message;
+                errorDiv.appendChild(h3);
+                errorDiv.appendChild(p);
+                ui.contentState.innerHTML = '';
+                ui.contentState.appendChild(errorDiv);
+                ui.contentState.classList.remove('hidden');
+                ui.resultStatus.textContent = "エラーが発生しました";
+                ui.statusIndicator.classList.remove('bg-emerald-500');
+                ui.statusIndicator.classList.add('bg-red-500');
+            } finally {
+                stopLoadingAnimation();
+                ui.submitBtn.disabled = false;
+                ui.submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            }
+        });
+
+        // --- Animation Logic ---
+        const MESSAGES_DEEP = [
+            "X(Twitter)から関連情報を収集中...",
+            "トレンドと議論の文脈を解析中...",
+            "反対意見やリスク要因を検索中(Deep)...",
+            "事実関係のクロスチェック実行中...",
+            "インサイトを統合し記事を構成中..."
+        ];
+
+        const MESSAGES_SIMPLE = [
+            "リサーチ対象を検索中...",
+            "主要な議論を抽出中...",
+            "文脈を整理しています...",
+            "記事フォーマットへ変換中..."
+        ];
+
+        function startLoadingAnimation(isDeep) {
+            ui.submitBtn.disabled = true;
+            ui.submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            ui.initialState.classList.add('hidden');
+            ui.contentState.classList.add('hidden');
+            ui.loadingState.classList.remove('hidden');
+
+            ui.statusIndicator.className = "w-2 h-2 rounded-full transition-colors bg-brand-500 animate-pulse";
+            ui.resultStatus.textContent = "AIリサーチ実行中...";
+
+            const messages = isDeep ? MESSAGES_DEEP : MESSAGES_SIMPLE;
+            let msgIndex = 0;
+            let progress = 0;
+
+            // Update Text
+            ui.loadingTitle.textContent = isDeep ? "DEEP RESEARCH ACTIVE" : "ANALYZING CONTEXT";
+            ui.loadingSubtitle.textContent = messages[0];
+
+            // Reset Interval
+            if (loadingInterval) clearInterval(loadingInterval);
+            if (progressInterval) clearInterval(progressInterval);
+
+            // Text Rotation
+            loadingInterval = setInterval(() => {
+                msgIndex = (msgIndex + 1) % messages.length;
+                ui.loadingSubtitle.style.opacity = 0;
+                setTimeout(() => {
+                    ui.loadingSubtitle.textContent = messages[msgIndex];
+                    ui.loadingSubtitle.style.opacity = 1;
+                }, 300);
+            }, 3000);
+
+            // Progress Bar simulation (asymptotic 90%)
+            ui.loadingBar.style.width = "0%";
+            progressInterval = setInterval(() => {
+                if (progress < 90) {
+                    // Slow down as it gets higher
+                    const increment = (95 - progress) / 50;
+                    progress += increment;
+                    ui.loadingBar.style.width = progress + "%";
+                }
+            }, 100);
+        }
+
+        function stopLoadingAnimation() {
+            if (loadingInterval) clearInterval(loadingInterval);
+            if (progressInterval) clearInterval(progressInterval);
+
+            // Fill bar to 100% then hide
+            if (ui.loadingBar) {
+                ui.loadingBar.style.width = "100%";
+            }
+
+            setTimeout(() => {
+                ui.loadingState.classList.add('hidden');
+            }, 500); // Wait for bar to fill
+        }
+
+        function updateLoadingUI(title, subtitle, percent) {
+            ui.loadingTitle.textContent = title;
+            ui.loadingSubtitle.textContent = subtitle;
+            if (ui.loadingBar) {
+                ui.loadingBar.style.width = percent + "%";
+            }
+        }
+
+        function renderResult(markdown) {
+            currentMarkdown = markdown;
+
+            // Extract Frontmatter Title
+            let title = "";
+            const frontmatterMatch = markdown.match(/^---\s*[\s\S]*?title:\s*"(.+?)"[\s\S]*?---\s*/);
+            if (frontmatterMatch && frontmatterMatch[1]) {
+                title = frontmatterMatch[1];
+            }
+
+            // Remove Frontmatter
+            let cleanContent = markdown.replace(/^---[\s\S]+?---\s*/, '');
+
+            // If content doesn't start with a Title (H1), prepend it
+            if (title && !cleanContent.trim().startsWith('# ')) {
+                cleanContent = `# ${title}\n\n` + cleanContent;
+            }
+
+            ui.contentState.innerHTML = DOMPurify.sanitize(marked.parse(cleanContent));
+            ui.contentState.classList.remove('hidden');
+            ui.copyBtn.classList.remove('hidden');
+            ui.resultStatus.textContent = "レポート生成完了";
+            ui.statusIndicator.className = "w-2 h-2 rounded-full transition-colors bg-emerald-500";
+        }
+
+        // --- Copy ---
+        ui.copyBtn.addEventListener('click', () => {
+            if (!currentMarkdown) return;
+            navigator.clipboard.writeText(currentMarkdown);
+            const original = ui.copyBtn.innerHTML;
+            ui.copyBtn.innerHTML = `<span class="text-brand-400 font-bold">コピー完了!</span>`;
+            setTimeout(() => ui.copyBtn.innerHTML = original, 2000);
+        });
+
+        ui.refreshHistoryBtn.addEventListener('click', fetchHistory);
+
+        // Init
+        fetchHistory();
+    </script>
+</body>
+
+</html>
